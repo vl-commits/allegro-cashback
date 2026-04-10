@@ -12,12 +12,15 @@
 
   .header {
     background: #ff5a00;
-    padding: 22px 32px;
+    padding: 18px 32px;
     display: flex;
     align-items: center;
-    gap: 20px;
+    justify-content: space-between;
     box-shadow: 0 4px 16px rgba(255,90,0,0.25);
+    flex-wrap: wrap;
+    gap: 12px;
   }
+  .header-left { display: flex; align-items: center; gap: 18px; }
   .header-logo {
     font-family: 'Nunito', Arial Black, sans-serif;
     font-size: 2rem;
@@ -28,9 +31,42 @@
   }
   .header-title {
     color: #fff;
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     font-weight: 800;
     letter-spacing: 0.01em;
+  }
+
+  /* LANG SWITCHER */
+  .lang-switch {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .lang-btn {
+    padding: 8px 20px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: rgba(255,255,255,0.7);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .lang-btn.active {
+    background: #fff;
+    color: #ff5a00;
+    border-radius: 8px;
+  }
+  .lang-divider {
+    color: rgba(255,255,255,0.4);
+    font-size: 1rem;
+    padding: 0 2px;
   }
 
   .search-wrap {
@@ -42,11 +78,7 @@
     z-index: 10;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   }
-  .search-inner {
-    max-width: 700px;
-    margin: 0 auto;
-    position: relative;
-  }
+  .search-inner { max-width: 700px; margin: 0 auto; position: relative; }
   .search-inner input {
     width: 100%;
     padding: 13px 48px 13px 20px;
@@ -60,14 +92,7 @@
     background: #fff;
   }
   .search-inner input:focus { box-shadow: 0 0 0 3px rgba(255,90,0,0.18); }
-  .search-icon {
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #ff5a00;
-    pointer-events: none;
-  }
+  .search-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: #ff5a00; pointer-events: none; }
   .search-count { text-align: center; margin-top: 8px; font-size: 0.82rem; color: #888; }
 
   .table-wrap { max-width: 1100px; margin: 28px auto 40px; padding: 0 16px; }
@@ -90,7 +115,10 @@
   .no-results { text-align: center; padding: 40px 20px; color: #aaa; font-size: 1.05rem; display: none; }
 
   @media (max-width: 640px) {
-    .header { padding: 14px; flex-direction: column; align-items: flex-start; gap: 8px; }
+    .header { padding: 14px 16px; }
+    .header-title { font-size: 0.95rem; }
+    .header-logo { font-size: 1.6rem; }
+    .lang-btn { padding: 6px 14px; font-size: 0.85rem; }
     .search-wrap { padding: 12px 10px; }
     .table-wrap { padding: 0 4px; }
     td, thead th { padding: 9px 8px; font-size: 0.8rem; }
@@ -100,8 +128,15 @@
 <body>
 
 <div class="header">
-  <div class="header-logo">allegro</div>
-  <div class="header-title">Cashback z zamówień na Allegro PL</div>
+  <div class="header-left">
+    <div class="header-logo">allegro</div>
+    <div class="header-title" id="headerTitle">Cashback z zamówień na Allegro PL</div>
+  </div>
+  <div class="lang-switch">
+    <button class="lang-btn active" id="btnPL" onclick="setLang('pl')">PL</button>
+    <span class="lang-divider">|</span>
+    <button class="lang-btn" id="btnUA" onclick="setLang('ua')">UA</button>
+  </div>
 </div>
 
 <div class="search-wrap">
@@ -118,9 +153,9 @@
   <table>
     <thead>
       <tr>
-        <th>Kategoria</th>
-        <th>Podkategoria</th>
-        <th>Stawka cashback</th>
+        <th id="thCat">Kategoria</th>
+        <th id="thSub">Podkategoria</th>
+        <th id="thRate">Stawka cashback</th>
       </tr>
     </thead>
     <tbody id="tableBody"></tbody>
@@ -129,137 +164,79 @@
 </div>
 
 <script>
-var data = [
-  ["Różne","Wszystkie podkategorie Akcesoria z wyłączeniem podkategorii Elektronika","do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Różne","podkategoria Akcesoria i przybory, Akcesoria szkoleniowe","do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Różne","podkategoria Akcesoria i dodatki w ramach kategorii Kawa","do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Różne","podkategoria Akcesoria do prania i sprzątania z wyłączeniem podkategorii Worki próżniowe","do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Różne","Akcesoria odblaskowe, Akcesoria ochronne, Akcesoria PCP, Akcesoria i części z wyłączeniem podkategorii Elektronika, Pedały i akcesoria, Akcesoria do jogi, Akcesoria sędziowskie, Części i akcesoria z wyłączeniem podkategorii Elektronika oraz Sport i turystyka","do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Różne","Akcesoria plastyczne, Elementy i akcesoria w ramach podkategorii Design i Antyki","do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Różne","podkategoria Akcesoria alkoholowe z wyłączeniem podkategorii Wyciskarki i prasy","do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Różne","podkategoria Akcesoria krawieckie, Akcesoria do zabawek, Akcesoria biurowe, Akcesoria barmańskie, Akcesoria kuchenne, Akcesoria do kas i drukarek, Akcesoria do plaszcza wodnego, Akcesoria kominkowe, Akcesoria lazienkowe, Akcesoria cukiernicze, Akcesoria pszczelarskie, Stroiki i akcesoria, Akcesoria do kokow, Akcesoria do bizuterii, Akcesoria do zegarkow, Akcesoria do gier towarzyskich","do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Różne","Podkategorie Odzież i Obuwie z wyłączeniem kategorii Motoryzacja","do 115 zł: 1,1%, powyżej 115 zł: 1,27 zł + 0,6% od nadwyżki ponad 115 zł"],
-  ["Różne","podkategoria Odzież robocza i BHP, Odzież ochronna i robocza, Bagaż, Odzież i obuwie robocze, Odzież i obuwie medyczne, Obuwie erotyczne, Bielizna i odzież erotyczna, Odzież obuwie","do 115 zł: 1,1%, powyżej 115 zł: 1,27 zł + 0,6% od nadwyżki ponad 115 zł"],
-  ["Różne","Wszystkie podkategorie Meble oraz Meble biurowe, Regały sklepowe i magazynowe","0,9% do 25 zł max"],
-  ["Dom i ogród","Dom i ogród (z wyłączeniem podkategorii wyżej i niżej)","1,05%"],
-  ["Dom i ogród","podkategoria Ogród z wyłączeniem podkategorii Oświetlenie oraz wymienionych poniżej","0,9% do 25 zł max"],
-  ["Dom i ogród","podkategoria Budownictwo i Akcesoria z wyłączeniem podkategorii poniżej","0,9% do 25 zł max"],
-  ["Dom i ogród","podkategoria Doniczki i osłonki","0,9% do 25 zł max"],
-  ["Dom i ogród","podkategoria Części do elektronarzędzi, Imadła, Młotki przecinaki dłuta, Nożyce do blachy, Organizacja i przechowywanie narzędzi, Osprzęt do elektronarzędzi, Pistolety do kleju, Pistolety do pianki, Pistolety do silikonu, Pistolety malarskie, Przyrządy miernicze, Szczypce nożyce obcęgi, Ściski, Wciągarki, Wkrętaki, Zgrzewarki, Zszywacze i zszywki w ramach podkategorii Narzędzia","0,85% do 12 zł max"],
-  ["Dom i ogród","podkategoria Inteligentny dom, Agregaty prądotwórcze, Przecinarki do glazury, Alarmy, Pompy i hydrofory","0,8% do 25 zł max"],
-  ["Dom i ogród","podkategorie Garaże, Kominki i akcesoria, Ogrzewanie, Prace na wysokości, Sprzęt i akcesoria budowlane, Zabezpieczenia przeciwpożarowe, Drzwi, Okna i parapety, Podłogi, Schody, Kuchnia, Łazienka i toaleta w podkategorii Budownictwo i Akcesoria","0,8% do 25 zł max"],
-  ["Dom i ogród","podkategoria Narzędzia hydrauliczne","0,8% do 25 zł max"],
-  ["Dom i ogród","podkategoria Domki, Domki dla dzieci, Baseny, Jacuzzi, Grille elektryczne, Grille gazowe, Grille węglowe, Paleniska ogrodowe, Glebogryzarki, Kosiarki, Kosy i podkaszarki, Odkurzacze i dmuchawy, Odśnieżarki, Piły, Rozdrabniacze, Wertykulatory i aeratory","0,55% do 12 zł max"],
-  ["Dom i ogród","podkategoria Narzędzia z wyłączeniem podkategorii wymienionych wyżej i niżej","0,55% do 12 zł max"],
-  ["Dom i ogród","podkategoria Myjki ciśnieniowe, Odkurzacze piorące, Odkurzacze przemysłowe, Klimatyzatory i Wentylatory w ramach podkategorii Klimatyzacja i wentylacja","0,45%"],
-  ["Dom i ogród","podkategoria Jednostki centralne ramach podkategorii Budownictwo i Akcesoria","0,45%"],
-  ["Dom i ogród","podkategoria Wentylatory domowe","0,45%"],
-  ["Dziecko","Dziecko (z wyłączeniem podkategorii powyżej i niżej)","1,05%"],
-  ["Dziecko","podkategoria Zdrowie i higiena z wyłączeniem podkategorii Ręczniki i okrycia","0,90%"],
-  ["Dziecko","podkategoria Zabawki ogrodowe","0,90%"],
-  ["Dziecko","podkategoria Wózki, Foteliki samochodowe, Klocki","0,65%"],
-  ["Dziecko","podkategorie Nianie elektroniczne i monitory oddechu, Żywność dla dzieci","0,50%"],
-  ["Elektronika","Elektronika (z wyłączeniem podkategorii powyżej i niżej)","0,45%"],
-  ["Elektronika","wszystkie podkategorie Akcesoria, Karty pamięci, Powerbanki, Obudowy i kieszenie, Internet, Chłodzenie i tuning, Sprzęt serwisowy, Akcesoria do podgrzewaczy tytoniu, Akcesoria do telewizorów, Akcesoria GSM, Akcesoria i części, Części i akcesoria, Złote numery, Podkładki, podkategoria Akcesoria Laptop PC z wyłączeniem podkategorii Karty PCMCIA i ExpressCard, Karty i rejestratory video, Tunery TV i SAT, Kamery internetowe, Zestawy i kamery do wideokonferencji","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Elektronika","podkategoria Części do laptopów z wyłączeniem podkategorii Pamięć RAM","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Elektronika","podkategoria Napędy optyczne i nośniki z wyłączeniem podkategorii Nagrywarki i napędy oraz Napędy dyskietek","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Elektronika","podkategoria Części serwisowe w ramach podkategorii Tablety","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Elektronika","podkategoria Anteny, Bluetooth oraz Huby USB w ramach podkategorii Urządzenia sieciowe","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Elektronika","podkategoria Konsole i automaty z wyłączeniem podkategorii Kierownice, Konsole, PlayStation VR oraz PlayStation VR2","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Elektronika","podkategoria Akumulatory do odkurzaczy, Chemia do odkurzaczy, Filtry do odkurzaczy, Rury i węże do odkurzaczy, Ssawki i szczotki do odkurzaczy, Worki do odkurzaczy, podkategoria Części zamienne w ramach podkategorii AGD drobne","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Elektronika","podkategoria Chemia gospodarcza oraz Części w ramach podkategorii AGD do zabudowy","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Elektronika","podkategoria Części w ramach podkategorii AGD wolnostojące","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Elektronika","podkategoria Kable przewody oraz Wtyki gniazda przejściówki w ramach podkategorii Elektronika","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Elektronika","podkategoria GPS i akcesoria z wyłączeniem podkategorii Lokalizacja GPS oraz Urządzenia","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Elektronika","podkategoria Nośniki, Torby futerały, Zasilanie, Literatura i instrukcje w ramach podkategorii Kamery","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Elektronika","podkategoria Piloty, Zasilanie w ramach podkategorii RTV i AGD","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Elektronika","podkategoria Części i podzespoły w ramach podkategorii TV i Video","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Elektronika","podkategoria Etui, Folie i szkła ochronne, Paski i bransolety oraz Ładowarki i stacje dokujące w ramach podkategorii Smartwatche i akcesoria","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Elektronika","podkategoria Papiery folie, Akcesoria do regeneracji, Bębny ramach podkategorii Drukarki i skanery","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
-  ["Elektronika","podkategoria Tusze, Tonery, Taśmy barwiące ramach podkategorii Drukarki i skanery","0,80%"],
-  ["Elektronika","podkategoria Oprogramowanie, Stare komputery w ramach podkategorii Komputery","0,80%"],
-  ["Elektronika","podkategoria Sprzęt estradowy studyjny i DJ-ski, Termowentylatory, Grzejniki elektryczne, Elektronika, Gadżety elektroniczne","0,80%"],
-  ["Elektronika","podkategoria Nagrywarki i napędy, Napędy dyskietek, Listwy zasilające i UPS, Głośniki, Mikrofony i słuchawki, Urządzenia wskazujące z wyłączeniem podkategorii Podkładki","0,60%"],
-  ["Elektronika","podkategoria Kierownice w ramach podkategorii Konsole i automaty","0,60%"],
-  ["Elektronika","podkategoria TV i Video z wyłączeniem podkategorii Części i podzespoły, Akcesoria do telewizorów, Projektory, Telewizory","0,60%"],
-  ["Elektronika","podkategoria Słuchawki, Sprzęt audio dla domu, Sprzęt audio przenośny, Sprzęt car audio, Sprzęt satelitarny w ramach podkategorii RTV i AGD","0,60%"],
-  ["Elektronika","podkategoria Obudowy oraz Zasilacze w ramach podkategorii Podzespoły komputerowe","0,60%"],
-  ["Elektronika","podkategoria Laptopy, Komputery stacjonarne, Pre-paid, Nawilżacze, Stacje parowe, Ekspresy ciśnieniowe, Depilatory, Roboty kuchenne, Projektory, Telewizory","0,20%"],
-  ["Elektronika","podkategoria Pamięć RAM w ramach kategorii Części do laptopów","0,20%"],
-  ["Elektronika","podkategoria Dyski i pamięci przenośne z wyłączeniem podkategorii Obudowy i kieszenie, podkategoria Serwery i akcesoria","0,20%"],
-  ["Elektronika","podkategoria Podzespoły komputerowe z wyłączeniem podkategorii wymienionych wyżej","0,20%"],
-  ["Firma i usługi","Firma i usługi (z wyłączeniem podkategorii powyżej i niżej)","1%"],
-  ["Firma i usługi","podkategoria Przemysł energetyczny, podkategoria Poligrafia w ramach kategorii Przemysł","0,75% do 25 zł max"],
-  ["Firma i usługi","podkategoria Maszyny i urządzenia, Gastronomia z wyłączeniem podkategorii Kuchnie, Maszyny zmywające, Naczynia kuchenne, Urządzenia barmańskie, Serwowanie, Meble technologiczne, Naczynia i akcesoria jednorazowe","0,75% do 25 zł max"],
-  ["Firma i usługi","podkategoria Budownictwo przemysłowe z wyłączeniem podkategorii Chemia budowlana, Cięcie styropianu, Materiały i akcesoria, Prace na wysokości, Przyrządy geodezyjne, Zaplecze budowlane","0,75% do 25 zł max"],
-  ["Firma i usługi","podkategoria Kursy online, Profesjonalne urządzenia czyszczące","0,45%"],
-  ["Firma i usługi","podkategoria Kuchnie oraz Maszyny zmywające w ramach podkategorii Gastronomia","0,45%"],
-  ["Kolekcje i sztuka","Kolekcje i sztuka (z wyłączeniem podkategorii powyżej i niżej)","1% do 24 zł max"],
-  ["Kolekcje i sztuka","podkategoria Rękodzieło z wyłączeniem podkategorii Przedmioty ręcznie wykonane","1,30%"],
-  ["Kolekcje i sztuka","podkategoria Złote monety kolekcjonerskie, Produkty inwestycyjne","0,3% do 3 zł max"],
-  ["Kultura i rozrywka","Kultura i rozrywka (z wyłączeniem podkategorii powyżej i niżej)","0,85%"],
-  ["Kultura i rozrywka","podkategoria Gry z wyłączeniem podkategorii Bitewne, Fabularne RPG, Karciane, Planszowe, Tradycyjne","0,65% do 10 zł max"],
-  ["Kultura i rozrywka","podkategoria Kody i doładowania z wyłączeniem podkategorii Gry","0,65% do 10 zł max"],
-  ["Kultura i rozrywka","podkategoria Instrumenty","0,65% do 10 zł max"],
-  ["Kultura i rozrywka","podkategoria Podręczniki szkolne, Audiobooki mp3, Ebooki, podkategoria Gry w ramach kategorii Kody i doładowania","0,45%"],
-  ["Moda","Moda (z wyłączeniem podkategorii powyżej i niżej)","do 115 zł: 1,1%, powyżej 115 zł: 1,27 zł + 0,59% od nadwyżki ponad 115 zł"],
-  ["Motoryzacja","Motoryzacja (z wyłączeniem podkategorii powyżej i niżej)","0,85% do 12 zł max (stan Nowy), 1,2% do 12 zł max (inne)"],
-  ["Motoryzacja","podkategoria Odkurzacze, Szlifierki, Wiertarki i wkrętaki, Oleje silnikowe","0,6% do 12 zł max"],
-  ["Motoryzacja","podkategoria Silniki kompletne w ramach podkategorii Części samochodowe","0,6% do 12 zł max"],
-  ["Motoryzacja","podkategoria Dyferencjały, Mosty, Kompletne skrzynie","0,6% do 12 zł max"],
-  ["Motoryzacja","podkategoria Paliwa, Usługi warsztatowe","0,45% do 12 zł max"],
-  ["Motoryzacja","podkategoria Opony i felgi z wyłączeniem podkategorii Osprzęt i akcesoria","0,45% do 12 zł max"],
-  ["Sport i turystyka","Sport i turystyka (z wyłączeniem podkategorii powyżej i niżej)","1,10%"],
-  ["Sport i turystyka","podkategoria Części w ramach podkategorii Rowery i akcesoria","1% do 12 zł max"],
-  ["Sport i turystyka","podkategoria Siłownia i fitness z wyłączeniem podkategorii Suplementy i odżywki oraz Ręczniki treningowe","1% do 12 zł max"],
-  ["Sport i turystyka","podkategoria Pontony i łodzie, Lodówki Turystyczne w podkategorii Turystyka","1% do 12 zł max"],
-  ["Sport i turystyka","podkategoria Sprzęt elektroniczny, Optyka, Suplementy i Odżywki, Sporty zimowe","0,80%"],
-  ["Sport i turystyka","podkategoria Hulajnogi elektryczne, Inne pojazdy elektryczne, Deskorolki elektryczne","0,75% do 12 zł max"],
-  ["Sport i turystyka","podkategoria Rowery z wyłączeniem podkategorii Dziecięce","0,75% do 12 zł max"],
-  ["Sport i turystyka","podkategoria Elektronika sportowa","0,50%"],
-  ["Supermarket","Supermarket (z wyłączeniem podkategorii powyżej i niżej)","1%"],
-  ["Supermarket","podkategoria Karmy oraz Smakołyki w ramach podkategorii Dla psów oraz Dla kotów","0,60%"],
-  ["Supermarket","podkategoria Herbata i napary, Kawa, Napoje i akcesoria, Słodycze przekąski desery, Alkohol Free, Yerba mate i akcesoria, Mięso i wędliny, Nabiał i jaja, Pieczywo, Ryby i owoce morza, Warzywa i owoce","0,50%"],
-  ["Uroda","Uroda (z wyłączeniem podkategorii powyżej i niżej)","1%"],
-  ["Uroda","podkategoria Urządzenia, Perfumy i wody, Pielęgnacja","0,80%"],
-  ["Zdrowie","Zdrowie (z wyłączeniem podkategorii powyżej i niżej)","1%"],
-  ["Zdrowie","podkategoria Erotyka z wyłączeniem podkategorii Bielizna i odzież erotyczna, Obuwie erotyczne","1,30%"],
-  ["Zdrowie","podkategoria Dermokosmetyki, Irygatory, Szczoteczki","0,60%"],
-  ["Zdrowie","podkategoria Nawilżacze oczyszczacze powietrza","0,20%"],
-  ["Zdrowie","podkategoria Leki bez recepty","0%"],
-  ["Pozostałe","Pozostałe","1,7%"]
-];
+var dataPL = [["\"Różne\"", "wszystkie podkategorie “Akcesoria” z wyłączeniem podkategorii “Elektronika”", "wysokość cashbacku zależy od ceny końcowej:  do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Różne\"", "podkategoria “Akcesoria i przybory”, “Akcesoria szkoleniowe”", "wysokość cashbacku zależy od ceny końcowej:  do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Różne\"", "podkategoria “Akcesoria i dodatki” w ramach kategorii “Kawa”", "wysokość cashbacku zależy od ceny końcowej:  do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Różne\"", "podkategoria “Akcesoria do prania i sprzątania” z wyłączeniem podkategorii “Worki próżniowe”", "wysokość cashbacku zależy od ceny końcowej:  do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Różne\"", "“Akcesoria odblaskowe”, “Akcesoria ochronne”, “Akcesoria PCP”, “Akcesoria i części” z wyłączeniem podkategorii “Elektronika”, “Pedały i akcesoria”, “Akcesoria do jogi”, “Akcesoria sędziowskie”, “Części i akcesoria” z wyłączeniem podkategorii “Elektronika” oraz „Sport i turystyka”", "wysokość cashbacku zależy od ceny końcowej:  do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Różne\"", "akcesoria plastyczne”, “Elementy i akcesoria” w ramach podkategorii “Design i Antyki”", "wysokość cashbacku zależy od ceny końcowej:  do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Różne\"", "podkategoria “Akcesoria alkoholowe” z wyłączeniem podkategorii \"Wyciskarki i prasy”", "wysokość cashbacku zależy od ceny końcowej:  do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Różne\"", "podkategoria “Akcesoria krawieckie”, “Akcesoria do zabawek”, “Akcesoria biurowe\", “Akcesoria barmańskie”, “Akcesoria kuchenne”, “Akcesoria do kas i drukarek”, “Akcesoria do płaszcza wodnego”, “Akcesoria kominkowe”, “Akcesoria łazienkowe”, “Akcesoria cukiernicze”, “Akcesoria pszczelarskie”, “Stroiki i akcesoria”, “Akcesoria do koków”, “Akcesoria do biżuterii”, “Akcesoria do zegarków”, “Akcesoria do gier towarzyskich”", "wysokość cashbacku zależy od ceny końcowej:  do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Różne\"", "podkategorie “Odzież” i “Obuwie” z wyłączeniem kategorii \"Motoryzacja\"", "wysokość cashbacku zależy od ceny końcowej: do 115 zł: 1,1%, powyżej 115 zł: 1,27 zł + 0,6% od nadwyżki ponad 115 zł"], ["\"Różne\"", "podkategoria “Odzież robocza i BHP”, “Odzież ochronna i robocza”, \"Bagaż\", \"Odzież i obuwie robocze\", “Odzież i obuwie medyczne”, \"Obuwie erotyczne\", \"Bielizna i odzież erotyczna\", \"Odzież, obuwie\"", "wysokość cashbacku zależy od ceny końcowej: do 115 zł: 1,1%, powyżej 115 zł: 1,27 zł + 0,6% od nadwyżki ponad 115 zł"], ["\"Różne\"", "wszystkie podkategorie “Meble” oraz “Meble biurowe”, “Regały sklepowe i magazynowe”", "0,9% do 25 zł max"], ["“Dom i ogród”", "\"Dom i ogród\" (z wyłączeniem podkategorii wyżej i niżej)", "1,05%"], ["“Dom i ogród”", "podkategoria “Ogród” z wyłączeniem podkategorii “Oświetlenie” oraz wymienionych poniżej", "0,9% do 25 zł max"], ["“Dom i ogród”", "podkategoria “Budownictwo i Akcesoria” z wyłączeniem podkategorii poniżej", "0,9% do 25 zł max"], ["“Dom i ogród”", "podkategoria “Doniczki i osłonki”", "0,9% do 25 zł max"], ["“Dom i ogród”", "podkategoria “Części do elektronarzędzi”, “Imadła”, “Młotki, przecinaki, dłuta”, \"Nożyce do blachy”, \"Organizacja i przechowywanie narzędzi\", \"Osprzęt do elektronarzędzi\", \"Pistolety do kleju\", \"Pistolety do pianki\", \"Pistolety do silikonu\", \"Pistolety malarskie\", \"Przyrządy miernicze\", \"Szczypce, nożyce, obcęgi\", \"Ściski\", \"Wciągarki\", \"Wkrętaki\", \"Zgrzewarki\", \"Zszywacze i zszywki\" w ramach podkategorii “Narzędzia”", "0,85% do 12 zł max"], ["“Dom i ogród”", "podkategoria \"Inteligentny dom\", “Agregaty prądotwórcze”, “Przecinarki do glazury”, “Alarmy”, “Pompy i hydrofory”", "0,8% do 25 zł max"], ["“Dom i ogród”", "podkategorie “Garaże”, “Kominki i akcesoria”, “Ogrzewanie”, “Prace na wysokości”, “Sprzęt i akcesoria budowlane”, “Zabezpieczenia przeciwpożarowe”, “Drzwi”, “Okna i parapety”, “Podłogi”, “Schody”, \"Kuchnia\", \"Łazienka i toaleta\" w podkategorii “Budownictwo i Akcesoria”", "0,8% do 25 zł max"], ["“Dom i ogród”", "podkategoria “Narzędzia hydrauliczne”", "0,8% do 25 zł max"], ["“Dom i ogród”", "podkategoria “Domki”, “Domki dla dzieci”, “Baseny”, “Jacuzzi”, “Grille elektryczne”, “Grille gazowe”, “Grille węglowe”, “Paleniska ogrodowe”, “Glebogryzarki”, “Kosiarki”, “Kosy i podkaszarki”, “Odkurzacze i dmuchawy”, “Odśnieżarki”, “Piły”, “Rozdrabniacze”, “Wertykulatory i aeratory”", "0,55% do 12 zł max"], ["“Dom i ogród”", "podkategoria “Narzędzia” z wyłączeniem podkategorii wymienionych wyżej i niżej", "0,55% do 12 zł max"], ["“Dom i ogród”", "podkategoria “Myjki ciśnieniowe”, \"Odkurzacze piorące”, \"Odkurzacze przemysłowe”, “Klimatyzatory” i “Wentylatory” w ramach podkategorii “Klimatyzacja i wentylacja”", "0,45%"], ["“Dom i ogród”", "podkategoria “Jednostki centralne” ramach podkategorii “Budownictwo i Akcesoria”", "0,45%"], ["“Dom i ogród”", "podkategoria “Wentylatory domowe”", "0,45%"], ["“Dziecko”", "“Dziecko” (z wyłączeniem podkategorii powyżej i niżej)", "1,05%"], ["“Dziecko”", "podkategoria “Zdrowie i higiena” z wyłączeniem podkategorii “Ręczniki i okrycia”", "0,90%"], ["“Dziecko”", "podkategoria “Zabawki ogrodowe”", "0,90%"], ["“Dziecko”", "podkategoria “Wózki”, “Foteliki samochodowe”, “Klocki”", "0,65%"], ["“Dziecko”", "podkategorie “Nianie elektroniczne i monitory oddechu”, \"Żywność dla dzieci”", "0,50%"], ["\"Elektronika\"", "\"Elektronika\" (z wyłączeniem podkategorii powyżej i niżej)", "0,45%"], ["\"Elektronika\"", "wszystkie podkategorie “Akcesoria” , “Karty pamięci”, “Powerbanki”, “Obudowy i kieszenie”, \"Internet\", \"Chłodzenie i tuning\", “Sprzęt serwisowy”, “Akcesoria do podgrzewaczy tytoniu”, “Akcesoria do telewizorów”, “Akcesoria GSM”, \"Akcesoria i części\", \"Części i akcesoria\", “Złote numery”, “Podkładki”, podkategoria “Akcesoria (Laptop, PC)” z wyłączeniem podkategorii “Karty PCMCIA i ExpressCard”, “Karty i rejestratory video”, “Tunery TV i SAT”, \"Kamery internetowe\", \"Zestawy i kamery do wideokonferencji\"", "wysokość cashbacku zależy od ceny końcowej: do 60 zł: 1,3% powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Elektronika\"", "podkategoria “Części do laptopów” z wyłączeniem podkategorii \"Pamięć RAM\"", "wysokość cashbacku zależy od ceny końcowej: do 60 zł: 1,3% powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Elektronika\"", "podkategoria \"Napędy optyczne i nośniki\" z wyłączeniem podkategorii “Nagrywarki i napędy” oraz “Napędy dyskietek”", "wysokość cashbacku zależy od ceny końcowej: do 60 zł: 1,3% powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Elektronika\"", "podkategoria “Części serwisowe” w ramach podkategorii “Tablety”", "wysokość cashbacku zależy od ceny końcowej: do 60 zł: 1,3% powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Elektronika\"", "podkategoria “Anteny”, “Bluetooth” oraz “Huby USB” w ramach podkategorii “Urządzenia sieciowe”", "wysokość cashbacku zależy od ceny końcowej: do 60 zł: 1,3% powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Elektronika\"", "podkategoria \"Konsole i automaty\" z wyłączeniem podkategorii \"Kierownice\", \"Konsole\", \"PlayStation VR\" oraz \"PlayStation VR2\"", "wysokość cashbacku zależy od ceny końcowej: do 60 zł: 1,3% powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Elektronika\"", "podkategoria \"Akumulatory do odkurzaczy\", \"Chemia do odkurzaczy\", \"Filtry do odkurzaczy\", \"Rury i węże do odkurzaczy\", \"Ssawki i szczotki do odkurzaczy\", \"Worki do odkurzaczy\", podkategoria \"Części zamienne\" w ramach podkategorii “AGD drobne”", "wysokość cashbacku zależy od ceny końcowej: do 60 zł: 1,3% powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Elektronika\"", "podkategoria \"Chemia gospodarcza\" oraz “Części” w ramach podkategorii “AGD do zabudowy”", "wysokość cashbacku zależy od ceny końcowej: do 60 zł: 1,3% powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Elektronika\"", "podkategoria “Części” w ramach podkategorii “AGD wolnostojące”", "wysokość cashbacku zależy od ceny końcowej: do 60 zł: 1,3% powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Elektronika\"", "podkategoria “Kable, przewody” oraz “Wtyki, gniazda, przejściówki” w ramach podkategorii “Elektronika”", "wysokość cashbacku zależy od ceny końcowej: do 60 zł: 1,3% powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Elektronika\"", "podkategoria \"GPS i akcesoria\" z wyłączeniem podkategorii \"Lokalizacja GPS\" oraz \"Urządzenia\"", "wysokość cashbacku zależy od ceny końcowej: do 60 zł: 1,3% powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Elektronika\"", "podkategoria \"Nośniki\", \"Torby, futerały\", \"Zasilanie\", \"Literatura i instrukcje\" w ramach podkategorii “Kamery”", "wysokość cashbacku zależy od ceny końcowej: do 60 zł: 1,3% powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Elektronika\"", "podkategoria “Piloty”, “Zasilanie” w ramach podkategorii “RTV i AGD”", "wysokość cashbacku zależy od ceny końcowej: do 60 zł: 1,3% powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Elektronika\"", "podkategoria “Części i podzespoły” w ramach podkategorii “TV i Video”", "wysokość cashbacku zależy od ceny końcowej: do 60 zł: 1,3% powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Elektronika\"", "podkategoria “Etui”, “Folie i szkła ochronne”, “Paski i bransolety” oraz “Ładowarki i stacje dokujące” w ramach podkategorii “Smartwatche i akcesoria”", "wysokość cashbacku zależy od ceny końcowej: do 60 zł: 1,3% powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Elektronika\"", "podkategoria \"Papiery, folie\", “Akcesoria do regeneracji”, “Bębny” ramach podkategorii “Drukarki i skanery”", "wysokość cashbacku zależy od ceny końcowej: do 60 zł: 1,3% powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"], ["\"Elektronika\"", "podkategoria \"Tusze\", \"Tonery\", \"Taśmy barwiące\" ramach podkategorii “Drukarki i skanery”", "0,80%"], ["\"Elektronika\"", "podkategoria “Oprogramowanie”, “Stare komputery” w ramach podkategorii “Komputery”", "0,80%"], ["\"Elektronika\"", "podkategoria “Sprzęt estradowy, studyjny i DJ-ski”, “Termowentylatory”, “Grzejniki elektryczne”, “Elektronika”, “Gadżety elektroniczne”", "0,80%"], ["\"Elektronika\"", "podkategoria “Nagrywarki i napędy”, “Napędy dyskietek”, “Listwy zasilające i UPS”, “Głośniki”, “Mikrofony i słuchawki”, “Urządzenia wskazujące” z wyłączeniem podkategorii “Podkładki”", "0,60%"], ["\"Elektronika\"", "podkategoria “Kierownice” w ramach podkategorii “Konsole i automaty”", "0,60%"], ["\"Elektronika\"", "podkategoria “TV i Video” z wyłączeniem podkategorii “Części i podzespoły”, “Akcesoria do telewizorów”, “Projektory”, “Telewizory”", "0,60%"], ["\"Elektronika\"", "podkategoria “Słuchawki”, “Sprzęt audio dla domu”, “Sprzęt audio przenośny”, “Sprzęt car audio”, “Sprzęt satelitarny” w ramach podkategorii “RTV i AGD”", "0,60%"], ["\"Elektronika\"", "podkategoria “Obudowy” oraz “Zasilacze” w ramach podkategorii “Podzespoły komputerowe”", "0,60%"], ["\"Elektronika\"", "podkategoria \"Laptopy\", \"Komputery stacjonarne\", “Pre-paid”, “Nawilżacze”, “Stacje parowe”, “Ekspresy ciśnieniowe”, “Depilatory”, “Roboty kuchenne”, “Projektory”, “Telewizory”", "0,20%"], ["\"Elektronika\"", "podkategoria \"Pamięć RAM\" w ramach kategorii “Części do laptopów”", "0,20%"], ["\"Elektronika\"", "podkategoria \"Dyski i pamięci przenośne\" z wyłączeniem podkategorii \"Obudowy i kieszenie\", podkategoria \"Serwery i akcesoria\"", "0,20%"], ["\"Elektronika\"", "podkategoria “Podzespoły komputerowe” z wyłączeniem podkategorii wymienionych wyżej", "0,20%"], ["“Firma i usługi”", "“Firma i usługi” (z wyłączeniem podkategorii powyżej i niżej)", "1%"], ["“Firma i usługi”", "podkategoria “Przemysł energetyczny”, podkategoria “Poligrafia” w ramach kategorii “Przemysł”", "0,75% do 25 zł max"], ["“Firma i usługi”", "podkategoria “Maszyny i urządzenia”, “Gastronomia” z wyłączeniem podkategorii “Kuchnie”, “Maszyny zmywające”, “Naczynia kuchenne”, “Urządzenia barmańskie”, “Serwowanie”, “Meble technologiczne”, \"Naczynia i akcesoria jednorazowe”", "0,75% do 25 zł max"], ["“Firma i usługi”", "podkategoria “Budownictwo przemysłowe” z wyłączeniem podkategorii “Chemia budowlana”, “Cięcie styropianu”, “Materiały i akcesoria”, “Prace na wysokości”, “Przyrządy geodezyjne”, “Zaplecze budowlane”", "0,75% do 25 zł max"], ["“Firma i usługi”", "podkategoria “Kursy online”, “Profesjonalne urządzenia czyszczące”", "0,45%"], ["“Firma i usługi”", "podkategoria “Kuchnie” oraz “Maszyny zmywające” w ramach podkategorii “Gastronomia”", "0,45%"], ["“Kolekcje i sztuka”", "“Kolekcje i sztuka” (z wyłączeniem podkategorii powyżej i niżej)", "1% do 24 zł max"], ["“Kolekcje i sztuka”", "podkategoria “Rękodzieło” z wyłączeniem podkategorii \"Przedmioty ręcznie wykonane”", "1,30%"], ["“Kolekcje i sztuka”", "podkategoria “Złote monety kolekcjonerskie”, \"Produkty inwestycyjne”", "0,3% do 3 zł max"], ["“Kultura i rozrywka”", "“Kultura i rozrywka” (z wyłączeniem podkategorii powyżej i niżej)", "0,85%"], ["“Kultura i rozrywka”", "podkategoria “Gry” z wyłączeniem podkategorii ”Bitewne”, “Fabularne (RPG)”, “Karciane”, “Planszowe”, “Tradycyjne”", "0,65% do 10 zł max"], ["“Kultura i rozrywka”", "podkategoria “Kody i doładowania”, z wyłączeniem podkategorii “Gry”", "0,65% do 10 zł max"], ["“Kultura i rozrywka”", "podkategoria “Instrumenty”", "0,65% do 10 zł max"], ["“Kultura i rozrywka”", "podkategoria \"Podręczniki szkolne\", “Audiobooki - mp3”, “Ebooki”, podkategoria “Gry” w ramach kategorii “Kody i doładowania”", "0,45%"], ["“Moda”", "“Moda” (z wyłączeniem podkategorii powyżej i niżej)", "wysokość cashbacku zależy od ceny końcowej: do 115 zł: 1,1%, powyżej 115 zł: 1,27 zł + 0,59% od nadwyżki ponad 115 zł"], ["\"Motoryzacja\"", "\"Motoryzacja\" (z wyłączeniem podkategorii powyżej i niżej)", "0,85% do 12 zł max z parametrem stan \"Nowy\",  1,2% do 12 zł max dotyczy wszystkich Ofert z wyjątkiem oznaczonych parametrem stan \"Nowy\""], ["\"Motoryzacja\"", "podkategoria “Odkurzacze”, “Szlifierki”, “Wiertarki i wkrętaki”, “Oleje silnikowe”", "0,6% do 12 zł max"], ["\"Motoryzacja\"", "podkategoria “Silniki kompletne” w ramach podkategorii “Części samochodowe”", "0,6% do 12 zł max"], ["\"Motoryzacja\"", "podkategoria “Dyferencjały”, “Mosty”, “Kompletne skrzynie”", "0,6% do 12 zł max"], ["\"Motoryzacja\"", "podkategoria “Paliwa”, “Usługi warsztatowe”", "0,45% do 12 zł max"], ["\"Motoryzacja\"", "podkategoria “Opony i felgi” z wyłączeniem podkategorii “Osprzęt i akcesoria”", "0,45% do 12 zł max"], ["\"Sport i turystyka\"", "\"Sport i turystyka\" (z wyłączeniem podkategorii powyżej i niżej)", "1,10%"], ["\"Sport i turystyka\"", "podkategoria \"Części\" w ramach podkategorii \"Rowery i akcesoria\"", "1% do 12 zł max"], ["\"Sport i turystyka\"", "podkategoria \"Siłownia i fitness\" z wyłączeniem podkategorii \"Suplementy i odżywki\", oraz “Ręczniki treningowe”", "1% do 12 zł max"], ["\"Sport i turystyka\"", "podkategoria \"Pontony i łodzie\", \"Lodówki Turystyczne\" w podkategorii “Turystyka”", "1% do 12 zł max"], ["\"Sport i turystyka\"", "podkategoria \"Sprzęt elektroniczny”, “Optyka”, \"Suplementy i Odżywki”, \"Sporty zimowe\"", "0,80%"], ["\"Sport i turystyka\"", "podkategoria \"Hulajnogi elektryczne\", \"Inne pojazdy elektryczne\", \"Deskorolki elektryczne\"", "0,75% do 12 zł max"], ["\"Sport i turystyka\"", "podkategoria \"Rowery\" z wyłączeniem podkategorii \"Dziecięce\"", "0,75% do 12 zł max"], ["\"Sport i turystyka\"", "podkategoria \"Elektronika sportowa\"", "0,50%"], ["“Supermarket”", "“Supermarket” (z wyłączeniem podkategorii powyżej i niżej)", "1%"], ["“Supermarket”", "podkategoria \"Karmy\" oraz \"Smakołyki\" w ramach podkategorii \"Dla psów\" oraz \"Dla kotów”", "0,60%"], ["“Supermarket”", "podkategoria “Herbata i napary”, “Kawa”, “Napoje i akcesoria”, “Słodycze, przekąski, desery”, „Alkohol Free”, “Yerba mate i akcesoria”, “Mięso i wędliny”, “Nabiał i jaja”, “Pieczywo”, “Ryby i owoce morza”, “Warzywa i owoce”", "0,50%"], ["\"Uroda\"", "\"Uroda\" (z wyłączeniem podkategorii powyżej i niżej)", "1%"], ["\"Uroda\"", "podkategoria “Urządzenia”, “Perfumy i wody”, “Pielęgnacja”", "0,80%"], ["\"Zdrowie\"", "\"Zdrowie\" (z wyłączeniem podkategorii powyżej i niżej)", "1%"], ["\"Zdrowie\"", "podkategoria \"Erotyka\" z wyłączeniem podkategorii \"Bielizna i odzież erotyczna\", \"Obuwie erotyczne\"", "1,30%"], ["\"Zdrowie\"", "podkategoria \"Dermokosmetyki\", \"Irygatory\", \"Szczoteczki\"", "0,60%"], ["\"Zdrowie\"", "podkategoria “Nawilżacze, oczyszczacze powietrza”", "0,20%"], ["\"Zdrowie\"", "podkategoria \"Leki bez recepty\"", "0%"], ["“Pozostałe”", "“pozostałe”", "1,70%"]];
+var dataUA = [["\"Різне\"", "Всі підкатегорії \"Аксесуари\", крім підкатегорії \"Електроніка\".", "Розмір кешбеку залежить від кінцевої ціни:  до 60 злотих: 1,2%, понад 60 злотих: 0,72 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Різне\"", "підкатегорії \"Аксесуари та посуд\", \"Тренувальні аксесуари\"", "Розмір кешбеку залежить від кінцевої ціни:  до 60 злотих: 1,2%, понад 60 злотих: 0,72 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Різне\"", "підкатегорія \"Аксесуари та приладдя\" в категорії \"Кава\"", "Розмір кешбеку залежить від кінцевої ціни:  до 60 злотих: 1,2%, понад 60 злотих: 0,72 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Різне\"", "підкатегорія \"Аксесуари для прання та прибирання\" за винятком підкатегорії \"Пилозбірники\"", "Розмір кешбеку залежить від кінцевої ціни:  до 60 злотих: 1,2%, понад 60 злотих: 0,72 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Різне\"", "\"Світловідбиваючі аксесуари\", \"Захисні аксесуари\", \"Аксесуари для PCP\", \"Аксесуари та деталі\", крім підкатегорії \"Електроніка\", \"Педалі та аксесуари\", \"Аксесуари для йоги\", \"Аксесуари для суддівства\", \"Запчастини та аксесуари\", крім підкатегорій \"Електроніка\" та \"Спорт і туризм\"", "Розмір кешбеку залежить від кінцевої ціни:  до 60 злотих: 1,2%, понад 60 злотих: 0,72 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Різне\"", "\"Художні аксесуари\", \"Комплектуючі та аксесуари\" в межах підкатегорії \"Дизайн та антикваріат\"", "Розмір кешбеку залежить від кінцевої ціни:  до 60 злотих: 1,2%, понад 60 злотих: 0,72 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Різне\"", "підкатегорія \"Алкогольне приладдя\", за винятком підкатегорії \"Преси та вичавлювачі\"", "Розмір кешбеку залежить від кінцевої ціни:  до 60 злотих: 1,2%, понад 60 злотих: 0,72 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Різне\"", "підкатегорії \"Аксесуари для пошиття одягу\", \"Аксесуари для іграшок\", \"Аксесуари для офісу\", \"Аксесуари для барменів\", \"Аксесуари для кухні\", \"Аксесуари для касових апаратів та принтерів\", \"Аксесуари для водяних камінів\", \"Аксесуари для камінів\", \"Аксесуари для ванних кімнат\", \"Аксесуари для кондитерських виробів\", \"Аксесуари для бджільництва\", \"Головні убори та аксесуари\", \"Аксесуари для шиньйонів\", \"Аксесуари для ювелірних виробів\", \"Аксесуари для годинників\", \"Аксесуари для ігрових ігор\".", "Розмір кешбеку залежить від кінцевої ціни:  до 60 злотих: 1,2%, понад 60 злотих: 0,72 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Різне\"", "Підкатегорії \"Одяг\" та \"Взуття\", за винятком категорії \"Автомобільне\"", "Сума кешбеку залежить від кінцевої ціни: до 115 злотих: 1,1%, понад 115 злотих: 1,27 злотих + 0,6% на суму перевищення понад 115 злотих"], ["\"Різне\"", "Підкатегорії \"Робочий одяг та спецодяг\", \"Захисний та робочий одяг\", \"Багаж\", \"Робочий одяг та взуття\", \"Медичний одяг та взуття\", \"Еротичне взуття\", \"Білизна та еротичний одяг\", \"Одяг, взуття\"", "Сума кешбеку залежить від кінцевої ціни: до 115 злотих: 1,1%, понад 115 злотих: 1,27 злотих + 0,6% на суму перевищення понад 115 злотих"], ["\"Різне\"", "Всі підкатегорії \"Меблі\" та \"Офісні меблі\", \"Магазинні та складські стелажі\"", "0,9% до 25 злотих максимум"], ["\"Дім і сад\"", "\"Дім і сад\" (за винятком підкатегорій, зазначених вище і нижче)", "1,05%"], ["\"Дім і сад\"", "підкатегорія \"Сад\", за винятком підкатегорії \"Освітлення\" та зазначених нижче підкатегорій", "0,9% до 25 злотих максимум"], ["\"Дім і сад\"", "підкатегорія \"Будівництво та аксесуари\", за винятком підкатегорій, зазначених нижче", "0,9% до 25 злотих максимум"], ["\"Дім і сад\"", "підкатегорія \"Вазони та кашпо\"", "0,9% до 25 злотих максимум"], ["\"Дім і сад\"", "підкатегорії \"Запчастини до електроінструменту\", \"Лещата\", \"Молотки, зубила, стамески\", \"Ножиці по жерсті\", \"Організація та зберігання інструменту\", \"Аксесуари до електроінструменту\", \"Клейові пістолети\", \"Пістолети для піни\", \"Силіконові пістолети\", \"Фарбопульти\", \"Вимірювальні прилади\", \"Плоскогубці, ножиці, кліщі\", \"Струбцини\", \"Лебідки\", \"Викрутки\", \"Зварювальні апарати\", \"Степлери та скоби\" в підкатегорії \"Інструменти\"", "0,85% до 12 злотих максимум"], ["\"Дім і сад\"", "підкатегорії \"Розумний дім\", \"Електрогенератори\", \"Плиткорізи\", \"Сигналізації\", \"Насоси та підводні крила\"", "0,8% до 25 злотих максимум"], ["\"Дім і сад\"", "підкатегорії \"Гаражі\", \"Каміни та аксесуари\", \"Опалення\", \"Роботи на висоті\", \"Будівельна техніка та аксесуари\", \"Протипожежний захист\", \"Двері\", \"Вікна та підвіконня\", \"Підлоги\", \"Сходи\", \"Кухня\", \"Ванна та туалет\" у підкатегорії \"Будівництво та аксесуари\"", "0,8% до 25 злотих максимум"], ["\"Дім і сад\"", "підкатегорія \"Сантехнічні інструменти\"", "0,8% до 25 злотих максимум"], ["\"Дім і сад\"", "підкатегорії \"Дачі\", \"Дитячі ігрові будиночки\", \"Басейни\", \"Джакузі\", \"Електричні барбекю\", \"Газові барбекю\", \"Барбекю на вугіллі\", \"Садові каміни\", \"Кондиціонери ґрунту\", \"Газонокосарки\", \"Газонокосарки та тримери\", \"Пилососи та повітродувки\", \"Снігоприбиральні машини\", \"Пили\", \"Подрібнювачі\", \"Аератори та скарифікатори\"", "0,55% до 12 злотих максимум"], ["\"Дім і сад\"", "підкатегорія \"Інструменти\", за винятком підкатегорій, зазначених вище та нижче", "0,55% до 12 злотих максимум"], ["\"Дім і сад\"", "підкатегорії \"Мийки високого тиску\", \"Миючі пилососи\", \"Промислові пилососи\", \"Кондиціонери\" та \"Вентилятори\" в підкатегорії \"Кондиціонери та вентиляція", "0,45%"], ["\"Дім і сад\"", "підкатегорія \"Центральні блоки\" в підкатегорії \"Конструкції та аксесуари\"", "0,45%"], ["\"Дім і сад\"", "підкатегорія \"Побутові вентилятори\"", "0,45%"], ["\"Діти\"", "\"Діти\" (за винятком підкатегорій, зазначених вище та нижче)", "1,05%"], ["\"Діти\"", "підкатегорія \"Здоров'я та гігієна\", за винятком підкатегорії \"Рушники та покривала\"", "0,90%"], ["\"Діти\"", "підкатегорія \"Садові іграшки\"", "0,90%"], ["\"Діти\"", "підкатегорії \"Коляски\", \"Автокрісла\", \"Лего\"", "0,65%"], ["\"Діти\"", "підкатегорії \"Радіоняні та електронні няні\", \"Дитяче харчування\".", "0,50%"], ["\"Електроніка\"", "\"Електроніка\" (за винятком підкатегорій вище і нижче)", "0,45%"], ["\"Електроніка\"", "всі підкатегорії \"Аксесуари\" \"Карти пам'яті\", \"Павербанки\", \"Чохли та кишені\", \"Інтернет\", \"Охолодження та тюнінг\", \"Сервісне обладнання\", \"Аксесуари для тютюнопаління\", \"Аксесуари для телевізорів\", \"Аксесуари для GSM\", \"Комплектуючі та деталі\", \"Запчастини та аксесуари\", \"Золоті цифри\", \"Накладки\", підкатегорія \"Комплектуючі (ноутбук, ПК)\" за винятком підкатегорій \"PCMCIA та ExpressCard\", \"Відеокарти та реєстратори\", \"ТВ та SAT-тюнери\", \"Веб-камери\", \"Комплекти та камери для відеоконференцій\"", "Сума кешбеку залежить від остаточної ціни: до 60 злотих: 1,3% понад 60 злотих: 0,78 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Електроніка\"", "підкатегорія \"Комплектуючі для ноутбуків\", за винятком підкатегорії \"Оперативна пам'ять\"", "Сума кешбеку залежить від остаточної ціни: до 60 злотих: 1,3% понад 60 злотих: 0,78 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Електроніка\"", "підкатегорія \"Оптичні накопичувачі та носії\", за винятком підкатегорій \"Диктофони та накопичувачі\" та \"Дисководи для гнучких дисків\"", "Сума кешбеку залежить від остаточної ціни: до 60 злотих: 1,3% понад 60 злотих: 0,78 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Електроніка\"", "підкатегорія \"Сервісні деталі\" в підкатегорії \"Планшети\"", "Сума кешбеку залежить від остаточної ціни: до 60 злотих: 1,3% понад 60 злотих: 0,78 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Електроніка\"", "підкатегорії \"Антени\", \"Bluetooth\" та \"USB-хаби\" у підкатегорії \"Мережеві пристрої\"", "Сума кешбеку залежить від остаточної ціни: до 60 злотих: 1,3% понад 60 злотих: 0,78 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Електроніка\"", "підкатегорія \"Приставки та ігрові автомати\", за винятком підкатегорій \"Кермо\", \"Приставки\", \"PlayStation VR\" та \"PlayStation VR2\"", "Сума кешбеку залежить від остаточної ціни: до 60 злотих: 1,3% понад 60 злотих: 0,78 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Електроніка\"", "підкатегорії \"Акумулятори для пилососів\", \"Хімія для пилососів\", \"Фільтри для пилососів\", \"Шланги та трубки для пилососів\", \"Насадки та щітки для пилососів\", \"Мішки для пилососів\", підкатегорії \"Запасні частини\" в межах підкатегорії \"Дрібна побутова техніка\"", "Сума кешбеку залежить від остаточної ціни: до 60 злотих: 1,3% понад 60 злотих: 0,78 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Електроніка\"", "підкатегорії \"Побутова хімія\" та \"Запчастини\" в підкатегорії \"Вбудовувана побутова техніка\"", "Сума кешбеку залежить від остаточної ціни: до 60 злотих: 1,3% понад 60 злотих: 0,78 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Електроніка\"", "підкатегорія \"Запчастини\" в підкатегорії \"Окрема побутова техніка\"", "Сума кешбеку залежить від остаточної ціни: до 60 злотих: 1,3% понад 60 злотих: 0,78 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Електроніка\"", "підкатегорії \"Кабелі, шнури\" та \"Вилки, розетки, адаптери\" в підкатегорії \"Електроніка\"", "Сума кешбеку залежить від остаточної ціни: до 60 злотих: 1,3% понад 60 злотих: 0,78 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Електроніка\"", "підкатегорія \"GPS та аксесуари\", за винятком підкатегорій \"GPS-локація\" та \"Пристрої\"", "Сума кешбеку залежить від остаточної ціни: до 60 злотих: 1,3% понад 60 злотих: 0,78 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Електроніка\"", "підкатегорії \"Чохли\", \"Сумки, чохли\", \"Блоки живлення\", \"Література та інструкції\" в підкатегорії \"Камери\"", "Сума кешбеку залежить від остаточної ціни: до 60 злотих: 1,3% понад 60 злотих: 0,78 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Електроніка\"", "підкатегорії \"Пульти дистанційного керування\", \"Блоки живлення\" в підкатегорії \"Побутова електроніка та побутова техніка\"", "Сума кешбеку залежить від остаточної ціни: до 60 злотих: 1,3% понад 60 злотих: 0,78 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Електроніка\"", "підкатегорія \"Запчастини та комплектуючі\" в підкатегорії \"Теле- та відеотехніка\"", "Сума кешбеку залежить від остаточної ціни: до 60 злотих: 1,3% понад 60 злотих: 0,78 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Електроніка\"", "підкатегорії \"Чохли\", \"Захисні плівки та скло\", \"Ремені та браслети\" та \"Зарядні пристрої та док-станції\" в підкатегорії \"Смарт-годинники та аксесуари\"", "Сума кешбеку залежить від остаточної ціни: до 60 злотих: 1,3% понад 60 злотих: 0,78 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Електроніка\"", "підкатегорії \"Папір, прозорі плівки\", \"Аксесуари для відновлення\", \"Барабани\" у підкатегорії \"Принтери та сканери\"", "Сума кешбеку залежить від остаточної ціни: до 60 злотих: 1,3% понад 60 злотих: 0,78 злотих + 0,8% на надлишок понад 60 злотих"], ["\"Електроніка\"", "підкатегорії \"Чорнила\", \"Тонер-картриджі\", \"Стрічки\" в підкатегорії \"Принтери та сканери\"", "0,80%"], ["\"Електроніка\"", "підкатегорії \"Програмне забезпечення\", \"Старі комп'ютери\" в підкатегорії \"Комп'ютери\"", "0,80%"], ["\"Електроніка\"", "підкатегорії \"Сценічне, студійне та діджейське обладнання\", \"Тепловентилятори\", \"Електричні обігрівачі\", \"Електроніка\", \"Електронні гаджети\"", "0,80%"], ["\"Електроніка\"", "підкатегорії \"Диктофони та накопичувачі\", \"Дисководи\", \"Подовжувачі та ДБЖ\", \"Колонки\", \"Мікрофони та навушники\", \"Вказівні пристрої\", окрім підкатегорії \"Пемзи\"", "0,60%"], ["\"Електроніка\"", "підкатегорія \"Рульові колеса\" в межах підкатегорії \"Приставки та торгові автомати\"", "0,60%"], ["\"Електроніка\"", "підкатегорія \"Теле- та відеотехніка\" без підкатегорій \"Запчастини та комплектуючі\", \"Аксесуари для телевізорів\", \"Проектори\", \"Телевізори\"", "0,60%"], ["\"Електроніка\"", "підкатегорії \"Навушники\", \"Аудіотехніка для дому\", \"Портативна аудіотехніка\", \"Автомобільна аудіотехніка\", \"Супутникове обладнання\" в межах підкатегорії \"Побутова електроніка та побутова техніка\"", "0,60%"], ["\"Електроніка\"", "підкатегорії \"Корпуси\" та \"Блоки живлення\" в підкатегорії \"Комп'ютерні комплектуючі\"", "0,60%"], ["\"Електроніка\"", "підкатегорії \"Ноутбуки\", \"Настільні комп'ютери\", \"Передплата\", \"Зволожувачі повітря\", \"Парові станції\", \"Скороварки\", \"Депілятори\", \"Кухонні комбайни\", \"Проектори\", \"Телевізори\"", "0,20%"], ["\"Електроніка\"", "підкатегорія \"Оперативна пам'ять\" в категорії \"Комплектуючі для ноутбуків\"", "0,20%"], ["\"Електроніка\"", "підкатегорія \"Накопичувачі та портативні пристрої пам'яті\" за винятком підкатегорії \"Чохли та кишені\", підкатегорія \"Сервери та аксесуари\"", "0,20%"], ["\"Електроніка\"", "підкатегорія \"Комп'ютерні комплектуючі\" за винятком підкатегорій, зазначених вище", "0,20%"], ["\"Бізнес та послуги\"", "\"Бізнес та послуги\" (за винятком підкатегорій вище та нижче)", "1%"], ["\"Бізнес та послуги\"", "підкатегорія \"Енергетика\", підкатегорія \"Поліграфія\" в межах категорії \"Промисловість\"", "0,75% до 25 злотих максимум"], ["\"Бізнес та послуги\"", "підкатегорії \"Машини та обладнання\", \"Громадське харчування\", за винятком підкатегорій \"Кухні\", \"Посудомийні машини\", \"Посуд\", \"Барний посуд\", \"Сервірувальне обладнання\", \"Технологічні меблі\", \"Одноразовий посуд та аксесуари\"", "0,75% до 25 злотих максимум"], ["\"Бізнес та послуги\"", "підкатегорія \"Промислове будівництво\" без підкатегорій \"Будівельна хімія\", \"Різання полістиролу\", \"Матеріали та аксесуари\", \"Роботи на висоті\", \"Геодезичні інструменти\", \"Будівельні матеріали\"", "0,75% до 25 злотих максимум"], ["\"Бізнес та послуги\"", "підкатегорії \"Онлайн-курси\", \"Професійна техніка для прибирання\"", "0,45%"], ["\"Бізнес та послуги\"", "підкатегорії \"Кухні\" та \"Посудомийні машини\" у підкатегорії \"Громадське харчування\".", "0,45%"], ["\"Колекції та мистецтво\"", "\"Колекції та мистецтво\" (за винятком підкатегорій вище та нижче)", "1% до 24 злотих максимум"], ["\"Колекції та мистецтво\"", "підкатегорія \"Ремесла\", за винятком підкатегорії \"Предмети ручної роботи", "1,30%"], ["\"Колекції та мистецтво\"", "підкатегорії \"Колекційні золоті монети\", \"Інвестиційні продукти\"", "0,3% до 3 злотих максимум"], ["\"Культура та розваги\"", "\"Культура і розваги\" (за винятком підкатегорій, зазначених вище і нижче)", "0,85%"], ["\"Культура та розваги\"", "підкатегорія \"Ігри\", за винятком підкатегорій \"Бойові ігри\", \"Рольові ігри (RPG)\", \"Карткові ігри\", \"Настільні ігри\", \"Традиційні ігри\"", "0,65% до 10 злотих максимум"], ["\"Культура та розваги\"", "підкатегорія \"Коди та поповнення\", за винятком підкатегорії \"Ігри\"", "0,65% до 10 злотих максимум"], ["\"Культура та розваги\"", "підкатегорія \"Інструменти\"", "0,65% до 10 злотих максимум"], ["\"Культура та розваги\"", "підкатегорії \"Підручники\", \"Аудіокниги - mp3\", \"Електронні книги\", підкатегорії \"Ігри\" в категорії \"Коди та поповнення\"", "0,45%"], ["\"Мода\"", "\"Мода\" (за винятком підкатегорій вище та нижче)", "Сума кешбеку залежить від кінцевої ціни: до 115 злотих: 1,1%, понад 115 злотих: 1,27 злотих + 0,59% на суму перевищення понад 115 злотих"], ["\"Моторизація\"", "\"Моторизація\" (за винятком підкатегорій вище та нижче)", "0,85% до 12 злотих максимум з параметром стану «Новий»,  1,2% до 12 злотих максимум поширюється на всі пропозиції, окрім тих, що зазначені параметром стану «Новий»"], ["\"Моторизація\"", "підкатегорії \"Пилососи\", \"Шліфувальні машини\", \"Дрилі та викрутки\", \"Моторні масла\"", "0,6% до 12 злотих максимум"], ["\"Моторизація\"", "підкатегорія \"Двигуни в зборі\" в підкатегорії \"Автозапчастини\"", "0,6% до 12 злотих максимум"], ["\"Моторизація\"", "підкатегорії \"Диференціали\", \"Мости\", \"Коробки передач в зборі\"", "0,6% до 12 злотих максимум"], ["\"Моторизація\"", "підкатегорії \"Паливо\", \"Послуги СТО\"", "0,45% до 12 злотих максимум"], ["\"Моторизація\"", "підкатегорія \"Шини та диски\", за винятком підкатегорії \"Аксесуари та фурнітура\"", "0,45% до 12 злотих максимум"], ["\"Спорт і подорожі\"", "\"Спорт і туризм\" (за винятком підкатегорій вище та нижче)", "1,10%"], ["\"Спорт і подорожі\"", "підкатегорія \"Запчастини\" у підкатегорії \"Велосипеди та аксесуари\"", "1% до 12 злотих максимум"], ["\"Спорт і подорожі\"", "підкатегорія \"Тренажерні зали та фітнес\", за винятком підкатегорій \"Добавки та харчові добавки\" та \"Рушники для тренувань\"", "1% до 12 злотих максимум"], ["\"Спорт і подорожі\"", "підкатегорії \"Понтони та човни\", \"Туристичні холодильники\" у підкатегорії \"Туризм\"", "1% до 12 злотих максимум"], ["\"Спорт і подорожі\"", "підкатегорії \"Електронна техніка\", \"Оптика\", \"Біодобавки та харчові добавки\", \"Зимові види спорту\"", "0,80%"], ["\"Спорт і подорожі\"", "підкатегорії \"Електросамокати\", \"Інші електротранспортні засоби\", \"Електроскейтборди\"", "0,75% до 12 злотих максимум"], ["\"Спорт і подорожі\"", "підкатегорія \"Велосипеди\" за винятком підкатегорії \"Велосипеди дитячі\"", "0,75% до 12 злотих максимум"], ["\"Спорт і подорожі\"", "підкатегорія \"Спортивна електроніка\"", "0,50%"], ["\"Супермаркет\"", "\"Супермаркет\" (за винятком підкатегорій вище та нижче)", "1%"], ["\"Супермаркет\"", "підкатегорії \"Їжа\" та \"Ласощі\" в межах підкатегорій \"Для собак\" та \"Для котів\"", "0,60%"], ["\"Супермаркет\"", "підкатегорії \"Чай та настої\", \"Кава\", \"Напої та аксесуари\", \"Солодощі, закуски, десерти\", \"Безкоштовний алкоголь\", \"Yerba mate та аксесуари\", \"М'ясо та м'ясні вироби\", \"Молочні продукти та яйця\", \"Хлібобулочні вироби\", \"Риба та морепродукти\", \"Овочі та фрукти\"", "0,50%"], ["\"Краса\"", "\"Краса\" (за винятком підкатегорій вище та нижче)", "1%"], ["\"Краса\"", "підкатегорії \"Побутова техніка\", \"Парфуми та вода\", \"Догляд\"", "0,80%"], ["\"Здоровʼя\"", "\"Здоров'я\" (за винятком підкатегорій вище та нижче)", "1%"], ["\"Здоровʼя\"", "підкатегорія \"Еротика\", за винятком підкатегорій \"Еротична білизна та одяг\", \"Еротичне взуття\"", "1,30%"], ["\"Здоровʼя\"", "підкатегорія \"Дермокосметика\", \"Іригатори\", \"Зубні щітки\"", "0,60%"], ["\"Здоровʼя\"", "підкатегорія \"Зволожувачі, очищувачі повітря\"", "0,20%"], ["\"Здоровʼя\"", "підкатегорія \"Безрецептурні препарати\"", "0%"], ["\"Інше\"", "\"Інше\"", "1,70%"]];
 
-var tbody = document.getElementById('tableBody');
-var lastCat = null;
+var currentLang = 'pl';
 
-for (var i = 0; i < data.length; i++) {
-  var row = data[i];
-  var tr = document.createElement('tr');
-  if (row[0] !== lastCat) {
-    tr.style.borderTop = '2px solid #ffe0cc';
-    lastCat = row[0];
+var i18n = {
+  pl: {
+    title: 'Cashback z zamówień na Allegro PL',
+    placeholder: 'Wpisz nazwę kategorii lub produktu…',
+    thCat: 'Kategoria',
+    thSub: 'Podkategoria',
+    thRate: 'Stawka cashback',
+    noResults: 'Brak wyników dla podanej frazy.',
+    found: function(v, t) { return 'Znaleziono: ' + v + ' z ' + t + ' wierszy'; }
+  },
+  ua: {
+    title: 'Кешбек із замовлень на Allegro PL',
+    placeholder: 'Введіть назву категорії або товару…',
+    thCat: 'Категорія',
+    thSub: 'Підкатегорія',
+    thRate: 'Ставка кешбеку',
+    noResults: 'Результатів не знайдено.',
+    found: function(v, t) { return 'Знайдено: ' + v + ' з ' + t + ' рядків'; }
   }
-  var td0 = document.createElement('td');
-  var td1 = document.createElement('td');
-  var td2 = document.createElement('td');
-  td0.textContent = row[0];
-  td1.textContent = row[1];
-  td2.textContent = row[2];
-  tr.appendChild(td0);
-  tr.appendChild(td1);
-  tr.appendChild(td2);
-  tbody.appendChild(tr);
+};
+
+function renderTable(data) {
+  var tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  var lastCat = null;
+  for (var i = 0; i < data.length; i++) {
+    var row = data[i];
+    var tr = document.createElement('tr');
+    if (row[0] !== lastCat) {
+      tr.style.borderTop = '2px solid #ffe0cc';
+      lastCat = row[0];
+    }
+    var td0 = document.createElement('td');
+    var td1 = document.createElement('td');
+    var td2 = document.createElement('td');
+    td0.textContent = row[0].replace(/^"|"$/g, '');
+    td1.textContent = row[1];
+    td2.textContent = row[2];
+    tr.appendChild(td0);
+    tr.appendChild(td1);
+    tr.appendChild(td2);
+    tbody.appendChild(tr);
+  }
 }
 
-var input = document.getElementById('searchInput');
-var countEl = document.getElementById('searchCount');
-var noResults = document.getElementById('noResults');
-var rows = tbody.querySelectorAll('tr');
+function setLang(lang) {
+  currentLang = lang;
+  var t = i18n[lang];
+  document.getElementById('headerTitle').textContent = t.title;
+  document.getElementById('searchInput').placeholder = t.placeholder;
+  document.getElementById('thCat').textContent = t.thCat;
+  document.getElementById('thSub').textContent = t.thSub;
+  document.getElementById('thRate').textContent = t.thRate;
+  document.getElementById('noResults').textContent = t.noResults;
+  document.getElementById('btnPL').className = 'lang-btn' + (lang === 'pl' ? ' active' : '');
+  document.getElementById('btnUA').className = 'lang-btn' + (lang === 'ua' ? ' active' : '');
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchCount').textContent = '';
+  renderTable(lang === 'pl' ? dataPL : dataUA);
+}
 
-input.addEventListener('input', function() {
+// Search
+document.getElementById('searchInput').addEventListener('input', function() {
   var q = this.value.trim().toLowerCase();
+  var tbody = document.getElementById('tableBody');
+  var rows = tbody.querySelectorAll('tr');
   var visible = 0;
+  var t = i18n[currentLang];
 
   for (var i = 0; i < rows.length; i++) {
     var tr = rows[i];
@@ -272,9 +249,12 @@ input.addEventListener('input', function() {
     }
   }
 
-  noResults.style.display = (visible === 0) ? 'block' : 'none';
-  countEl.textContent = q ? ('Znaleziono: ' + visible + ' z ' + rows.length + ' wierszy') : '';
+  document.getElementById('noResults').style.display = (visible === 0) ? 'block' : 'none';
+  document.getElementById('searchCount').textContent = q ? t.found(visible, rows.length) : '';
 });
+
+// Init
+setLang('pl');
 </script>
 </body>
 </html>
