@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cashback z zamówień na Allegro PL</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Nunito', sans-serif; background: #f5f5f5; color: #222; min-height: 100vh; }
+
+  .header {
+    background: #ff5a00;
+    padding: 22px 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 16px rgba(255,90,0,0.25);
+  }
+  .header-logo {
+    font-family: 'Nunito', Arial Black, sans-serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -1px;
+    flex-shrink: 0;
+  }
+  .header-title {
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+  }
+
+  .search-wrap {
+    background: #fff;
+    border-bottom: 2px solid #ffe0cc;
+    padding: 18px 32px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .search-inner {
+    max-width: 700px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .search-inner input {
+    width: 100%;
+    padding: 13px 48px 13px 20px;
+    border: 2px solid #ff5a00;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: 'Nunito', sans-serif;
+    outline: none;
+    transition: box-shadow 0.2s;
+    color: #222;
+    background: #fff;
+  }
+  .search-inner input:focus { box-shadow: 0 0 0 3px rgba(255,90,0,0.18); }
+  .search-icon {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #ff5a00;
+    pointer-events: none;
+  }
+  .search-count { text-align: center; margin-top: 8px; font-size: 0.82rem; color: #888; }
+
+  .table-wrap { max-width: 1100px; margin: 28px auto 40px; padding: 0 16px; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,0.08); }
+  thead tr { background: #ff5a00; }
+  thead th { color: #fff; font-weight: 800; padding: 14px 18px; text-align: left; font-size: 0.95rem; }
+  thead th:first-child { width: 18%; }
+  thead th:nth-child(2) { width: 52%; }
+  thead th:nth-child(3) { width: 30%; }
+
+  tbody tr { border-bottom: 1px solid #f0f0f0; transition: background 0.15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #fff5ef; }
+  tbody tr.hidden { display: none; }
+
+  td { padding: 12px 18px; vertical-align: top; font-size: 0.92rem; line-height: 1.55; }
+  td:first-child { font-weight: 700; color: #ff5a00; }
+  td:nth-child(3) { font-weight: 700; color: #333; }
+
+  .no-results { text-align: center; padding: 40px 20px; color: #aaa; font-size: 1.05rem; display: none; }
+
+  @media (max-width: 640px) {
+    .header { padding: 14px; flex-direction: column; align-items: flex-start; gap: 8px; }
+    .search-wrap { padding: 12px 10px; }
+    .table-wrap { padding: 0 4px; }
+    td, thead th { padding: 9px 8px; font-size: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">allegro</div>
+  <div class="header-title">Cashback z zamówień na Allegro PL</div>
+</div>
+
+<div class="search-wrap">
+  <div class="search-inner">
+    <input type="text" id="searchInput" placeholder="Wpisz nazwę kategorii lub produktu…" autocomplete="off" />
+    <svg class="search-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  </div>
+  <div class="search-count" id="searchCount"></div>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Kategoria</th>
+        <th>Podkategoria</th>
+        <th>Stawka cashback</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+  <div class="no-results" id="noResults">Brak wyników dla podanej frazy.</div>
+</div>
+
+<script>
+var data = [
+  ["Różne","Wszystkie podkategorie Akcesoria z wyłączeniem podkategorii Elektronika","do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Różne","podkategoria Akcesoria i przybory, Akcesoria szkoleniowe","do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Różne","podkategoria Akcesoria i dodatki w ramach kategorii Kawa","do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Różne","podkategoria Akcesoria do prania i sprzątania z wyłączeniem podkategorii Worki próżniowe","do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Różne","Akcesoria odblaskowe, Akcesoria ochronne, Akcesoria PCP, Akcesoria i części z wyłączeniem podkategorii Elektronika, Pedały i akcesoria, Akcesoria do jogi, Akcesoria sędziowskie, Części i akcesoria z wyłączeniem podkategorii Elektronika oraz Sport i turystyka","do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Różne","Akcesoria plastyczne, Elementy i akcesoria w ramach podkategorii Design i Antyki","do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Różne","podkategoria Akcesoria alkoholowe z wyłączeniem podkategorii Wyciskarki i prasy","do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Różne","podkategoria Akcesoria krawieckie, Akcesoria do zabawek, Akcesoria biurowe, Akcesoria barmańskie, Akcesoria kuchenne, Akcesoria do kas i drukarek, Akcesoria do plaszcza wodnego, Akcesoria kominkowe, Akcesoria lazienkowe, Akcesoria cukiernicze, Akcesoria pszczelarskie, Stroiki i akcesoria, Akcesoria do kokow, Akcesoria do bizuterii, Akcesoria do zegarkow, Akcesoria do gier towarzyskich","do 60 zł: 1,2%, powyżej 60 zł: 0,72 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Różne","Podkategorie Odzież i Obuwie z wyłączeniem kategorii Motoryzacja","do 115 zł: 1,1%, powyżej 115 zł: 1,27 zł + 0,6% od nadwyżki ponad 115 zł"],
+  ["Różne","podkategoria Odzież robocza i BHP, Odzież ochronna i robocza, Bagaż, Odzież i obuwie robocze, Odzież i obuwie medyczne, Obuwie erotyczne, Bielizna i odzież erotyczna, Odzież obuwie","do 115 zł: 1,1%, powyżej 115 zł: 1,27 zł + 0,6% od nadwyżki ponad 115 zł"],
+  ["Różne","Wszystkie podkategorie Meble oraz Meble biurowe, Regały sklepowe i magazynowe","0,9% do 25 zł max"],
+  ["Dom i ogród","Dom i ogród (z wyłączeniem podkategorii wyżej i niżej)","1,05%"],
+  ["Dom i ogród","podkategoria Ogród z wyłączeniem podkategorii Oświetlenie oraz wymienionych poniżej","0,9% do 25 zł max"],
+  ["Dom i ogród","podkategoria Budownictwo i Akcesoria z wyłączeniem podkategorii poniżej","0,9% do 25 zł max"],
+  ["Dom i ogród","podkategoria Doniczki i osłonki","0,9% do 25 zł max"],
+  ["Dom i ogród","podkategoria Części do elektronarzędzi, Imadła, Młotki przecinaki dłuta, Nożyce do blachy, Organizacja i przechowywanie narzędzi, Osprzęt do elektronarzędzi, Pistolety do kleju, Pistolety do pianki, Pistolety do silikonu, Pistolety malarskie, Przyrządy miernicze, Szczypce nożyce obcęgi, Ściski, Wciągarki, Wkrętaki, Zgrzewarki, Zszywacze i zszywki w ramach podkategorii Narzędzia","0,85% do 12 zł max"],
+  ["Dom i ogród","podkategoria Inteligentny dom, Agregaty prądotwórcze, Przecinarki do glazury, Alarmy, Pompy i hydrofory","0,8% do 25 zł max"],
+  ["Dom i ogród","podkategorie Garaże, Kominki i akcesoria, Ogrzewanie, Prace na wysokości, Sprzęt i akcesoria budowlane, Zabezpieczenia przeciwpożarowe, Drzwi, Okna i parapety, Podłogi, Schody, Kuchnia, Łazienka i toaleta w podkategorii Budownictwo i Akcesoria","0,8% do 25 zł max"],
+  ["Dom i ogród","podkategoria Narzędzia hydrauliczne","0,8% do 25 zł max"],
+  ["Dom i ogród","podkategoria Domki, Domki dla dzieci, Baseny, Jacuzzi, Grille elektryczne, Grille gazowe, Grille węglowe, Paleniska ogrodowe, Glebogryzarki, Kosiarki, Kosy i podkaszarki, Odkurzacze i dmuchawy, Odśnieżarki, Piły, Rozdrabniacze, Wertykulatory i aeratory","0,55% do 12 zł max"],
+  ["Dom i ogród","podkategoria Narzędzia z wyłączeniem podkategorii wymienionych wyżej i niżej","0,55% do 12 zł max"],
+  ["Dom i ogród","podkategoria Myjki ciśnieniowe, Odkurzacze piorące, Odkurzacze przemysłowe, Klimatyzatory i Wentylatory w ramach podkategorii Klimatyzacja i wentylacja","0,45%"],
+  ["Dom i ogród","podkategoria Jednostki centralne ramach podkategorii Budownictwo i Akcesoria","0,45%"],
+  ["Dom i ogród","podkategoria Wentylatory domowe","0,45%"],
+  ["Dziecko","Dziecko (z wyłączeniem podkategorii powyżej i niżej)","1,05%"],
+  ["Dziecko","podkategoria Zdrowie i higiena z wyłączeniem podkategorii Ręczniki i okrycia","0,90%"],
+  ["Dziecko","podkategoria Zabawki ogrodowe","0,90%"],
+  ["Dziecko","podkategoria Wózki, Foteliki samochodowe, Klocki","0,65%"],
+  ["Dziecko","podkategorie Nianie elektroniczne i monitory oddechu, Żywność dla dzieci","0,50%"],
+  ["Elektronika","Elektronika (z wyłączeniem podkategorii powyżej i niżej)","0,45%"],
+  ["Elektronika","wszystkie podkategorie Akcesoria, Karty pamięci, Powerbanki, Obudowy i kieszenie, Internet, Chłodzenie i tuning, Sprzęt serwisowy, Akcesoria do podgrzewaczy tytoniu, Akcesoria do telewizorów, Akcesoria GSM, Akcesoria i części, Części i akcesoria, Złote numery, Podkładki, podkategoria Akcesoria Laptop PC z wyłączeniem podkategorii Karty PCMCIA i ExpressCard, Karty i rejestratory video, Tunery TV i SAT, Kamery internetowe, Zestawy i kamery do wideokonferencji","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Elektronika","podkategoria Części do laptopów z wyłączeniem podkategorii Pamięć RAM","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Elektronika","podkategoria Napędy optyczne i nośniki z wyłączeniem podkategorii Nagrywarki i napędy oraz Napędy dyskietek","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Elektronika","podkategoria Części serwisowe w ramach podkategorii Tablety","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Elektronika","podkategoria Anteny, Bluetooth oraz Huby USB w ramach podkategorii Urządzenia sieciowe","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Elektronika","podkategoria Konsole i automaty z wyłączeniem podkategorii Kierownice, Konsole, PlayStation VR oraz PlayStation VR2","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Elektronika","podkategoria Akumulatory do odkurzaczy, Chemia do odkurzaczy, Filtry do odkurzaczy, Rury i węże do odkurzaczy, Ssawki i szczotki do odkurzaczy, Worki do odkurzaczy, podkategoria Części zamienne w ramach podkategorii AGD drobne","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Elektronika","podkategoria Chemia gospodarcza oraz Części w ramach podkategorii AGD do zabudowy","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Elektronika","podkategoria Części w ramach podkategorii AGD wolnostojące","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Elektronika","podkategoria Kable przewody oraz Wtyki gniazda przejściówki w ramach podkategorii Elektronika","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Elektronika","podkategoria GPS i akcesoria z wyłączeniem podkategorii Lokalizacja GPS oraz Urządzenia","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Elektronika","podkategoria Nośniki, Torby futerały, Zasilanie, Literatura i instrukcje w ramach podkategorii Kamery","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Elektronika","podkategoria Piloty, Zasilanie w ramach podkategorii RTV i AGD","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Elektronika","podkategoria Części i podzespoły w ramach podkategorii TV i Video","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Elektronika","podkategoria Etui, Folie i szkła ochronne, Paski i bransolety oraz Ładowarki i stacje dokujące w ramach podkategorii Smartwatche i akcesoria","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Elektronika","podkategoria Papiery folie, Akcesoria do regeneracji, Bębny ramach podkategorii Drukarki i skanery","do 60 zł: 1,3%, powyżej 60 zł: 0,78 zł + 0,8% od nadwyżki ponad 60 zł"],
+  ["Elektronika","podkategoria Tusze, Tonery, Taśmy barwiące ramach podkategorii Drukarki i skanery","0,80%"],
+  ["Elektronika","podkategoria Oprogramowanie, Stare komputery w ramach podkategorii Komputery","0,80%"],
+  ["Elektronika","podkategoria Sprzęt estradowy studyjny i DJ-ski, Termowentylatory, Grzejniki elektryczne, Elektronika, Gadżety elektroniczne","0,80%"],
+  ["Elektronika","podkategoria Nagrywarki i napędy, Napędy dyskietek, Listwy zasilające i UPS, Głośniki, Mikrofony i słuchawki, Urządzenia wskazujące z wyłączeniem podkategorii Podkładki","0,60%"],
+  ["Elektronika","podkategoria Kierownice w ramach podkategorii Konsole i automaty","0,60%"],
+  ["Elektronika","podkategoria TV i Video z wyłączeniem podkategorii Części i podzespoły, Akcesoria do telewizorów, Projektory, Telewizory","0,60%"],
+  ["Elektronika","podkategoria Słuchawki, Sprzęt audio dla domu, Sprzęt audio przenośny, Sprzęt car audio, Sprzęt satelitarny w ramach podkategorii RTV i AGD","0,60%"],
+  ["Elektronika","podkategoria Obudowy oraz Zasilacze w ramach podkategorii Podzespoły komputerowe","0,60%"],
+  ["Elektronika","podkategoria Laptopy, Komputery stacjonarne, Pre-paid, Nawilżacze, Stacje parowe, Ekspresy ciśnieniowe, Depilatory, Roboty kuchenne, Projektory, Telewizory","0,20%"],
+  ["Elektronika","podkategoria Pamięć RAM w ramach kategorii Części do laptopów","0,20%"],
+  ["Elektronika","podkategoria Dyski i pamięci przenośne z wyłączeniem podkategorii Obudowy i kieszenie, podkategoria Serwery i akcesoria","0,20%"],
+  ["Elektronika","podkategoria Podzespoły komputerowe z wyłączeniem podkategorii wymienionych wyżej","0,20%"],
+  ["Firma i usługi","Firma i usługi (z wyłączeniem podkategorii powyżej i niżej)","1%"],
+  ["Firma i usługi","podkategoria Przemysł energetyczny, podkategoria Poligrafia w ramach kategorii Przemysł","0,75% do 25 zł max"],
+  ["Firma i usługi","podkategoria Maszyny i urządzenia, Gastronomia z wyłączeniem podkategorii Kuchnie, Maszyny zmywające, Naczynia kuchenne, Urządzenia barmańskie, Serwowanie, Meble technologiczne, Naczynia i akcesoria jednorazowe","0,75% do 25 zł max"],
+  ["Firma i usługi","podkategoria Budownictwo przemysłowe z wyłączeniem podkategorii Chemia budowlana, Cięcie styropianu, Materiały i akcesoria, Prace na wysokości, Przyrządy geodezyjne, Zaplecze budowlane","0,75% do 25 zł max"],
+  ["Firma i usługi","podkategoria Kursy online, Profesjonalne urządzenia czyszczące","0,45%"],
+  ["Firma i usługi","podkategoria Kuchnie oraz Maszyny zmywające w ramach podkategorii Gastronomia","0,45%"],
+  ["Kolekcje i sztuka","Kolekcje i sztuka (z wyłączeniem podkategorii powyżej i niżej)","1% do 24 zł max"],
+  ["Kolekcje i sztuka","podkategoria Rękodzieło z wyłączeniem podkategorii Przedmioty ręcznie wykonane","1,30%"],
+  ["Kolekcje i sztuka","podkategoria Złote monety kolekcjonerskie, Produkty inwestycyjne","0,3% do 3 zł max"],
+  ["Kultura i rozrywka","Kultura i rozrywka (z wyłączeniem podkategorii powyżej i niżej)","0,85%"],
+  ["Kultura i rozrywka","podkategoria Gry z wyłączeniem podkategorii Bitewne, Fabularne RPG, Karciane, Planszowe, Tradycyjne","0,65% do 10 zł max"],
+  ["Kultura i rozrywka","podkategoria Kody i doładowania z wyłączeniem podkategorii Gry","0,65% do 10 zł max"],
+  ["Kultura i rozrywka","podkategoria Instrumenty","0,65% do 10 zł max"],
+  ["Kultura i rozrywka","podkategoria Podręczniki szkolne, Audiobooki mp3, Ebooki, podkategoria Gry w ramach kategorii Kody i doładowania","0,45%"],
+  ["Moda","Moda (z wyłączeniem podkategorii powyżej i niżej)","do 115 zł: 1,1%, powyżej 115 zł: 1,27 zł + 0,59% od nadwyżki ponad 115 zł"],
+  ["Motoryzacja","Motoryzacja (z wyłączeniem podkategorii powyżej i niżej)","0,85% do 12 zł max (stan Nowy), 1,2% do 12 zł max (inne)"],
+  ["Motoryzacja","podkategoria Odkurzacze, Szlifierki, Wiertarki i wkrętaki, Oleje silnikowe","0,6% do 12 zł max"],
+  ["Motoryzacja","podkategoria Silniki kompletne w ramach podkategorii Części samochodowe","0,6% do 12 zł max"],
+  ["Motoryzacja","podkategoria Dyferencjały, Mosty, Kompletne skrzynie","0,6% do 12 zł max"],
+  ["Motoryzacja","podkategoria Paliwa, Usługi warsztatowe","0,45% do 12 zł max"],
+  ["Motoryzacja","podkategoria Opony i felgi z wyłączeniem podkategorii Osprzęt i akcesoria","0,45% do 12 zł max"],
+  ["Sport i turystyka","Sport i turystyka (z wyłączeniem podkategorii powyżej i niżej)","1,10%"],
+  ["Sport i turystyka","podkategoria Części w ramach podkategorii Rowery i akcesoria","1% do 12 zł max"],
+  ["Sport i turystyka","podkategoria Siłownia i fitness z wyłączeniem podkategorii Suplementy i odżywki oraz Ręczniki treningowe","1% do 12 zł max"],
+  ["Sport i turystyka","podkategoria Pontony i łodzie, Lodówki Turystyczne w podkategorii Turystyka","1% do 12 zł max"],
+  ["Sport i turystyka","podkategoria Sprzęt elektroniczny, Optyka, Suplementy i Odżywki, Sporty zimowe","0,80%"],
+  ["Sport i turystyka","podkategoria Hulajnogi elektryczne, Inne pojazdy elektryczne, Deskorolki elektryczne","0,75% do 12 zł max"],
+  ["Sport i turystyka","podkategoria Rowery z wyłączeniem podkategorii Dziecięce","0,75% do 12 zł max"],
+  ["Sport i turystyka","podkategoria Elektronika sportowa","0,50%"],
+  ["Supermarket","Supermarket (z wyłączeniem podkategorii powyżej i niżej)","1%"],
+  ["Supermarket","podkategoria Karmy oraz Smakołyki w ramach podkategorii Dla psów oraz Dla kotów","0,60%"],
+  ["Supermarket","podkategoria Herbata i napary, Kawa, Napoje i akcesoria, Słodycze przekąski desery, Alkohol Free, Yerba mate i akcesoria, Mięso i wędliny, Nabiał i jaja, Pieczywo, Ryby i owoce morza, Warzywa i owoce","0,50%"],
+  ["Uroda","Uroda (z wyłączeniem podkategorii powyżej i niżej)","1%"],
+  ["Uroda","podkategoria Urządzenia, Perfumy i wody, Pielęgnacja","0,80%"],
+  ["Zdrowie","Zdrowie (z wyłączeniem podkategorii powyżej i niżej)","1%"],
+  ["Zdrowie","podkategoria Erotyka z wyłączeniem podkategorii Bielizna i odzież erotyczna, Obuwie erotyczne","1,30%"],
+  ["Zdrowie","podkategoria Dermokosmetyki, Irygatory, Szczoteczki","0,60%"],
+  ["Zdrowie","podkategoria Nawilżacze oczyszczacze powietrza","0,20%"],
+  ["Zdrowie","podkategoria Leki bez recepty","0%"],
+  ["Pozostałe","Pozostałe","1,7%"]
+];
+
+var tbody = document.getElementById('tableBody');
+var lastCat = null;
+
+for (var i = 0; i < data.length; i++) {
+  var row = data[i];
+  var tr = document.createElement('tr');
+  if (row[0] !== lastCat) {
+    tr.style.borderTop = '2px solid #ffe0cc';
+    lastCat = row[0];
+  }
+  var td0 = document.createElement('td');
+  var td1 = document.createElement('td');
+  var td2 = document.createElement('td');
+  td0.textContent = row[0];
+  td1.textContent = row[1];
+  td2.textContent = row[2];
+  tr.appendChild(td0);
+  tr.appendChild(td1);
+  tr.appendChild(td2);
+  tbody.appendChild(tr);
+}
+
+var input = document.getElementById('searchInput');
+var countEl = document.getElementById('searchCount');
+var noResults = document.getElementById('noResults');
+var rows = tbody.querySelectorAll('tr');
+
+input.addEventListener('input', function() {
+  var q = this.value.trim().toLowerCase();
+  var visible = 0;
+
+  for (var i = 0; i < rows.length; i++) {
+    var tr = rows[i];
+    var combined = (tr.children[0].textContent + ' ' + tr.children[1].textContent + ' ' + tr.children[2].textContent).toLowerCase();
+    if (!q || combined.indexOf(q) !== -1) {
+      tr.classList.remove('hidden');
+      visible++;
+    } else {
+      tr.classList.add('hidden');
+    }
+  }
+
+  noResults.style.display = (visible === 0) ? 'block' : 'none';
+  countEl.textContent = q ? ('Znaleziono: ' + visible + ' z ' + rows.length + ' wierszy') : '';
+});
+</script>
+</body>
+</html>
