@@ -114,6 +114,15 @@
 
   .no-results { text-align: center; padding: 40px 20px; color: #aaa; font-size: 1.05rem; display: none; }
 
+  .notice {
+    max-width: 700px;
+    margin: 0 auto 14px;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: #888;
+    line-height: 1.5;
+  }
+
   @media (max-width: 640px) {
     .header { padding: 14px 16px; }
     .header-title { font-size: 0.95rem; }
@@ -140,6 +149,7 @@
 </div>
 
 <div class="search-wrap">
+  <p class="notice" id="noticeText"></p>
   <div class="search-inner">
     <input type="text" id="searchInput" placeholder="Wpisz nazwę kategorii lub produktu…" autocomplete="off" />
     <svg class="search-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -177,6 +187,7 @@ var i18n = {
     thSub: 'Podkategoria',
     thRate: 'Stawka cashback',
     noResults: 'Brak wyników dla podanej frazy.',
+    notice: 'Zwróć uwagę, że czasem wysokość cashbacku może różnić się od tabeli kategorii, ponieważ zależy od warunków współpracy sprzedawców na platformie Allegro. Również przy aktywacji gorącego cashbacku procent zwrotu rośnie zgodnie z mnożnikiem.',
     found: function(v, t) { return 'Znaleziono: ' + v + ' z ' + t + ' wierszy'; }
   },
   ua: {
@@ -186,6 +197,7 @@ var i18n = {
     thSub: 'Підкатегорія',
     thRate: 'Ставка кешбеку',
     noResults: 'Результатів не знайдено.',
+    notice: 'Зверни увагу, що іноді розмір кешбеку може відрізнятися від наведених у таблиці значень, оскільки він залежить від умов співпраці продавців на платформі Allegro. Крім того, при активації Гарячого кешбеку відсоток збільшується відповідно до коефіцієнта.',
     found: function(v, t) { return 'Знайдено: ' + v + ' з ' + t + ' рядків'; }
   }
 };
@@ -223,6 +235,7 @@ function setLang(lang) {
   document.getElementById('thSub').textContent = t.thSub;
   document.getElementById('thRate').textContent = t.thRate;
   document.getElementById('noResults').textContent = t.noResults;
+  document.getElementById('noticeText').textContent = t.notice;
   document.getElementById('btnPL').className = 'lang-btn' + (lang === 'pl' ? ' active' : '');
   document.getElementById('btnUA').className = 'lang-btn' + (lang === 'ua' ? ' active' : '');
   document.getElementById('searchInput').value = '';
